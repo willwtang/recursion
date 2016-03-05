@@ -42,7 +42,7 @@ var stringifyJSON = function(obj) {
 		  		var value = stringifyJSON(obj[prop]);
 
 		  		if(value) {
-			  		var pair = putInQuotes(prop) + ":" + stringifyJSON(obj[prop]);
+			  		var pair = putInQuotes(prop) + ":" + value;
 			  		output.push(pair);
 		  		}
 		  	}
