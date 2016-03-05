@@ -19,23 +19,29 @@ var parseJSON = function(json) {
     
   }
 
+  // Syntax error - if the character is not expected
   function throwError(error) {
   	throw 'SyntaxError: ' + error;
   }
 
+  // main function for traversing through the string
   function next() {
   	var character = arguments[0];
   	if (character) {
+      // If an argument is passed in, before we increment index, we need to make sure the current character is same 
+      // as the argument. This is the primary way to check for non-JSON strings. 
   		if (charNow !== character) throwError('unexpected character - expecting ' + '"' + character + '"' + "instead of " + '"' + charNow + '" ' + 'at ' + index);	
   	}
   	
 	  index += 1;
+    // Get rid of all the whitespace (ONLY USE THIS WHEN NOT DEALING WITH STRINGS!)
 	  while (json.charAt(index) && json.charAt(index) <= ' ') index += 1;
 
 	  charNow = index < len ? json.charAt(index) : undefined;
 		return charNow;
   }
   
+  // function for traversing strings - doesn't have the whitespace function
   function stringNext() {
     var character = arguments[0];
   	if (character) {
@@ -51,12 +57,20 @@ var parseJSON = function(json) {
 
   function number() {
   	var start = index;
+
+    // Negative number;
   	if (charNow === "-") next('-');
+
+    // Traverse through the numbers;
   	while(charNow >= 0 && charNow <= 9) next();
+
+    // decimal place
   	if(charNow === ".") {
   		next('.');
   		while(charNow >= 0 && charNow <= 9) next();
   	}
+
+    // exponents 
   	if (charNow === "e") {
   		next('e');
   		if (charNow === '-' || charNow === '+') next();
@@ -73,9 +87,13 @@ var parseJSON = function(json) {
 
   function string() {
   	var output = '';
+    // The first character of a JSON string is always '"'
   	next('"');
+
   	while (charNow !== '"') {
+      // escape characters
   		if (charNow === '\\') {
+        // when \ is detected, skip it and just add whatever is being escaped
   			stringNext('\\');
   			output += escapeChar[charNow];
   			stringNext();
@@ -90,6 +108,9 @@ var parseJSON = function(json) {
 
   function bools() {
   	switch (charNow) {
+      // for true, false, and null; all real strings start with '"'. If it starts with a letter, it must be one of
+      // these three (undefined is not a JSON object). If next() throws an error then the entire string 
+      // is not a valid JSON string.
   		case 't':
   			next('t');
   			next('r');
@@ -114,8 +135,9 @@ var parseJSON = function(json) {
 
   function array() {
   	var output = []; 
-  	next();
+  	next('[');
 
+    // Recursively parse each element of the array
   	while (charNow && charNow !== "]") {
   		output.push(typeOfValue());
   		if (charNow === ',') next(',');
@@ -130,11 +152,12 @@ var parseJSON = function(json) {
   	var output = {};
   	next();
 
+    // Recusrive parse each key-value pair
   	while (charNow && charNow !== "}") {
   		var key = typeOfValue();
   		next(':');
   		var value = typeOfValue();
-  		if (charNow !== '}') next();
+  		if (charNow === ',') next(',');
   		output[key] = value;
   	}
   	next('}');
@@ -145,7 +168,7 @@ var parseJSON = function(json) {
 
 	  switch(charNow) {
 
-	  	case '"':
+	  	case '"': // JSON strings all start with '"'
 	  		return string();
 
 	  	case "[":
