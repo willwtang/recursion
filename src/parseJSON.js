@@ -21,7 +21,7 @@ var parseJSON = function(json) {
 
   // Syntax error - if the character is not expected
   function throwError(error) {
-  	throw 'SyntaxError: ' + error;
+  	throw new SyntaxError(error);
   }
 
   // main function for traversing through the string
@@ -30,7 +30,7 @@ var parseJSON = function(json) {
   	if (character) {
       // If an argument is passed in, before we increment index, we need to make sure the current character is same 
       // as the argument. This is the primary way to check for non-JSON strings. 
-  		if (charNow !== character) throwError('unexpected character - expecting ' + '"' + character + '"' + "instead of " + '"' + charNow + '" ' + 'at ' + index);	
+  		if (charNow !== character) throwError('Unexpected token ' + charNow);	
   	}
   	
 	  index += 1;
@@ -45,7 +45,7 @@ var parseJSON = function(json) {
   function stringNext() {
     var character = arguments[0];
   	if (character) {
-  		if (charNow !== character) throwError('unexpected character - expecting ' + '"' + character + '"' + "instead of " + '"' + charNow + '" ' + 'at ' + index);	
+  		if (charNow !== character) throwError('Unexpected token ' + charNow);	
   	}
   	
 	  index += 1;
@@ -90,7 +90,7 @@ var parseJSON = function(json) {
     // The first character of a JSON string is always '"'
   	next('"');
 
-  	while (charNow !== '"') {
+  	while (charNow && charNow !== '"') {
       // escape characters
   		if (charNow === '\\') {
         // when \ is detected, skip it and just add whatever is being escaped
@@ -102,7 +102,10 @@ var parseJSON = function(json) {
 				stringNext();
 			}
 		}
-		next();
+
+    if (charNow === '"') next('"');
+    else throwError('Unexpected end of input');
+
 		return output;
   }
 
@@ -143,7 +146,9 @@ var parseJSON = function(json) {
   		if (charNow === ',') next(',');
   	}
 
-    next(']');
+    if (charNow === ']') next(']');
+    else throwError('Unexpected end of input');
+
   	return output;
 
   }
@@ -160,7 +165,10 @@ var parseJSON = function(json) {
   		if (charNow === ',') next(',');
   		output[key] = value;
   	}
-  	next('}');
+  	
+    if (charNow === '}') next('}');
+    else throwError('Unexpected end of input');
+
   	return output;
   }
 
